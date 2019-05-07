@@ -36,21 +36,23 @@ class LogSuccessfulLogin
      */
     public function handle(Login $event)
     {
-        $user = $event->user;
-        $ip = $this->request->ip();
-        $userAgent = $this->request->userAgent();
-        $known = $user->authentications()->whereIpAddress($ip)->whereUserAgent($userAgent)->first();
+        if($event->guard != 'wink') {
+            $user = $event->user;
+            $ip = $this->request->ip();
+            $userAgent = $this->request->userAgent();
+            $known = $user->authentications()->whereIpAddress($ip)->whereUserAgent($userAgent)->first();
 
-        $authenticationLog = new AuthenticationLog([
-            'ip_address' => $ip,
-            'user_agent' => $userAgent,
-            'login_at' => Carbon::now(),
-        ]);
+            $authenticationLog = new AuthenticationLog([
+                'ip_address' => $ip,
+                'user_agent' => $userAgent,
+                'login_at' => Carbon::now(),
+            ]);
 
-        $user->authentications()->save($authenticationLog);
+            $user->authentications()->save($authenticationLog);
 
-        if (! $known && config('authentication-log.notify')) {
-            $user->notify(new NewDevice($authenticationLog));
+            if ( !$known && config('authentication-log.notify')) {
+                $user->notify(new NewDevice($authenticationLog));
+            }
         }
     }
 }
